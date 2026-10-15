@@ -1,41 +1,47 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+frontend/.env
+backend/.env
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Maven & Java build artifacts
+backend/target/
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
 
-# testing
-/coverage
+# Node & Frontend build output
+frontend/node_modules/
+node_modules/
+frontend/dist/
+dist/
+.eslintcache
+.stylelintcache
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# IDEs & Editors
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
 
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Operating System files
+.DS_Store
+Thumbs.db
+ehthumbs.db
