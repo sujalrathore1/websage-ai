@@ -12,10 +12,10 @@ app:
     base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta/models}
     timeout-ms: ${GEMINI_TIMEOUT_MS:30000}
   scraper:
-    timeout-ms: ${SCRAPER_TIMEOUT_MS:10000}
+    timeout-ms: ${SCRAPER_TIMEOUT_MS:25000}
     max-content-length: ${SCRAPER_MAX_CONTENT_LENGTH:12000}
     max-body-bytes: ${SCRAPER_MAX_BODY_BYTES:2097152} # 2MB
-    user-agent: "WebSageAI-Scraper/1.0 (+https://github.com/websage-ai; WebPage Summarizer Bot)"
+    user-agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 (WebSageAI-Scraper/1.0)"
   cors:
     allowed-origins: ${FRONTEND_ORIGIN:http://localhost:5173,http://localhost:3000}
 

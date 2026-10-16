@@ -68,6 +68,8 @@ public class WebScraperService {
             try {
                 Connection.Response response = Jsoup.connect(currentUrl)
                         .userAgent(userAgent)
+                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+                        .header("Accept-Language", "en-US,en;q=0.9")
                         .timeout(timeoutMs)
                         .maxBodySize(maxBodyBytes)
                         .followRedirects(false)
