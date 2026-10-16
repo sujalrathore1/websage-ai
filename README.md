@@ -11,7 +11,19 @@
 
 ---
 
+## 🌐 Live Deployments & Demo
+
+| Service | Platform | Live URL | Status |
+| :--- | :--- | :--- | :--- |
+| **Frontend Application** | Vercel | [https://websage-ai-delta.vercel.app](https://websage-ai-delta.vercel.app) | ![Vercel](https://img.shields.io/badge/Vercel-Live-brightgreen?logo=vercel) |
+| **Backend REST API** | Render (Docker) | [https://websage-backend-e3ak.onrender.com](https://websage-backend-e3ak.onrender.com) | ![Render](https://img.shields.io/badge/Render-Live-brightgreen?logo=render) |
+| **API Health Check** | Render | [https://websage-backend-e3ak.onrender.com/api/health](https://websage-backend-e3ak.onrender.com/api/health) | ![Health](https://img.shields.io/badge/Health-UP-blue) |
+| **GitHub Repository** | GitHub | [https://github.com/sujalrathore1/websage-ai](https://github.com/sujalrathore1/websage-ai) | ![Repo](https://img.shields.io/badge/GitHub-Public-informational?logo=github) |
+
+---
+
 ## Table of Contents
+- [Live Deployments & Demo](#-live-deployments--demo)
 - [Architecture & Request Flow](#architecture--request-flow)
 - [Technologies Used](#technologies-used)
 - [Key Features](#key-features)
@@ -333,7 +345,7 @@ git commit -m "feat: complete production-ready WebSage AI full-stack application
 git branch -M main
 
 # 5. Link your GitHub remote repository
-git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/<YOUR_REPOSITORY_NAME>.git
+git remote add origin https://github.com/sujalrathore1/websage-ai.git
 
 # 6. Push to GitHub
 git push -u origin main
@@ -349,18 +361,19 @@ Render supports containerized Spring Boot applications via Docker:
 
 1. Sign in to [Render](https://render.com/).
 2. Click **"New +"** -> **"Web Service"**.
-3. Connect your GitHub repository.
+3. Connect your GitHub repository (`sujalrathore1/websage-ai`).
 4. Select the repository and choose:
    - **Environment**: `Docker`
    - **Root Directory**: `backend`
    - **DockerfilePath**: `Dockerfile`
 5. Under **Environment Variables**, add:
    - `GEMINI_API_KEY`: *(Your Google AI Studio API key)*
-   - `GEMINI_MODEL`: `gemini-1.5-flash`
-   - `FRONTEND_ORIGIN`: `https://your-frontend.vercel.app`
+   - `GEMINI_MODEL`: `gemini-3.5-flash-lite`
+   - `FRONTEND_ORIGIN`: `https://websage-ai-delta.vercel.app`
    - `PORT`: `8080`
 6. Click **"Deploy Web Service"**.
-7. Once deployed, note your backend URL (e.g. `https://websage-backend.onrender.com`). Verify by visiting `https://websage-backend.onrender.com/api/health`.
+7. Live Backend URL: [https://websage-backend-e3ak.onrender.com](https://websage-backend-e3ak.onrender.com)
+   Verify health by visiting: [https://websage-backend-e3ak.onrender.com/api/health](https://websage-backend-e3ak.onrender.com/api/health).
 
 ---
 
@@ -368,17 +381,17 @@ Render supports containerized Spring Boot applications via Docker:
 
 1. Sign in to [Vercel](https://vercel.com/).
 2. Click **"Add New..."** -> **"Project"**.
-3. Import your GitHub repository.
+3. Import your GitHub repository (`sujalrathore1/websage-ai`).
 4. Configure the project:
    - **Framework Preset**: `Vite`
    - **Root Directory**: Click "Edit" and select `frontend`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
 5. Under **Environment Variables**, add:
-   - `VITE_API_BASE_URL`: `https://websage-backend.onrender.com` *(your live backend URL)*
+   - `VITE_API_BASE_URL`: `https://websage-backend-e3ak.onrender.com`
 6. Click **"Deploy"**.
-7. Vercel will build and output your live URL (e.g. `https://websage-ai.vercel.app`).
-8. Update the backend's `FRONTEND_ORIGIN` variable on Render with your Vercel domain to ensure CORS allows requests.
+7. Live Frontend URL: [https://websage-ai-delta.vercel.app](https://websage-ai-delta.vercel.app)
+8. Update the backend's `FRONTEND_ORIGIN` variable on Render with `https://websage-ai-delta.vercel.app` to ensure CORS permits requests.
 
 ---
 

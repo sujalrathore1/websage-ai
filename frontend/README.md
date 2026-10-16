@@ -4,6 +4,13 @@ The frontend client for **WebSage AI**, a web page summarizer powered by Java Sp
 
 ---
 
+## 🌐 Live Deployments
+- **Live Frontend App:** [https://websage-ai-delta.vercel.app](https://websage-ai-delta.vercel.app)
+- **Live Backend API:** [https://websage-backend-e3ak.onrender.com](https://websage-backend-e3ak.onrender.com)
+- **GitHub Repository:** [https://github.com/sujalrathore1/websage-ai](https://github.com/sujalrathore1/websage-ai)
+
+---
+
 ## Tech Stack
 - **Framework**: React 19 (via Vite)
 - **UI Library**: Material UI (MUI v6) & Emotion
