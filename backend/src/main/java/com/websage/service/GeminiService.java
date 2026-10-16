@@ -6,7 +6,6 @@ import com.websage.exception.AiServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
@@ -14,8 +13,11 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class GeminiService {
@@ -31,13 +33,13 @@ public class GeminiService {
 
     public GeminiService(
             @Value("${app.gemini.api-key:}") String apiKey,
-            @Value("${app.gemini.model:gemini-1.5-flash}") String model,
+            @Value("${app.gemini.model:gemini-3.5-flash-lite}") String model,
             @Value("${app.gemini.base-url:https://generativelanguage.googleapis.com/v1beta/models}") String baseUrl,
             @Value("${app.gemini.timeout-ms:30000}") int timeoutMs,
             ObjectMapper objectMapper
     ) {
         this.apiKey = apiKey != null ? apiKey.trim() : "";
-        this.model = (model != null && !model.isBlank()) ? model.trim() : "gemini-1.5-flash";
+        this.model = (model != null && !model.isBlank()) ? model.trim() : "gemini-3.5-flash-lite";
         this.baseUrl = baseUrl != null ? baseUrl.trim() : "https://generativelanguage.googleapis.com/v1beta/models";
         this.timeoutMs = timeoutMs;
         this.objectMapper = objectMapper;
@@ -66,7 +68,6 @@ public class GeminiService {
         String safeTitle = (pageTitle != null && !pageTitle.isBlank()) ? pageTitle.trim() : "Untitled Webpage";
         String prompt = buildPrompt(safeTitle, scrapedText);
 
-        // Construct Gemini API request payload
         Map<String, Object> part = Map.of("text", prompt);
         Map<String, Object> contentItem = Map.of("parts", List.of(part));
         Map<String, Object> generationConfig = Map.of(
@@ -78,42 +79,60 @@ public class GeminiService {
                 "generationConfig", generationConfig
         );
 
-        String endpointUri = String.format("%s/%s:generateContent?key=%s", baseUrl, model, apiKey);
+        // Build distinct ordered candidate models list
+        Set<String> modelSet = new LinkedHashSet<>();
+        modelSet.add(model);
+        modelSet.add("gemini-3.5-flash-lite");
+        modelSet.add("gemini-3.1-flash-lite");
+        modelSet.add("gemini-flash-lite-latest");
+        modelSet.add("gemini-3.5-flash");
+        List<String> candidateModels = new ArrayList<>(modelSet);
 
-        log.info("Sending summarization request to Gemini model: {}", model);
+        String lastErrorMsg = "Unknown error occurred";
+        int lastStatus = 502;
 
-        try {
-            String rawResponse = restClient.post()
-                    .uri(endpointUri)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(requestPayload)
-                    .retrieve()
-                    .onStatus(HttpStatusCode::isError, (req, resp) -> {
-                        int code = resp.getStatusCode().value();
-                        String statusText = resp.getStatusText();
-                        log.error("Gemini API error status: {} {}", code, statusText);
-                    })
-                    .body(String.class);
+        for (int i = 0; i < candidateModels.size(); i++) {
+            String activeModel = candidateModels.get(i);
+            String endpointUri = String.format("%s/%s:generateContent?key=%s", baseUrl, activeModel, apiKey);
+            log.info("Sending summarization request to Gemini model: {}", activeModel);
 
-            return parseGeminiResponse(rawResponse);
+            try {
+                String rawResponse = restClient.post()
+                        .uri(endpointUri)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(requestPayload)
+                        .retrieve()
+                        .body(String.class);
 
-        } catch (RestClientResponseException e) {
-            int status = e.getStatusCode().value();
-            log.error("Gemini API HTTP {} error: {}", status, e.getResponseBodyAsString());
+                return parseGeminiResponse(rawResponse);
 
-            if (status == 429) {
-                throw new AiServiceException("Gemini API rate limit exceeded. Please wait a moment and try again.", 429, e);
-            } else if (status == 400 || status == 403) {
-                throw new AiServiceException("Gemini API authentication or configuration error. Please verify your GEMINI_API_KEY and GEMINI_MODEL.", 502, e);
-            } else {
-                throw new AiServiceException("Gemini API returned an error (" + status + "). Please try again later.", 502, e);
+            } catch (RestClientResponseException e) {
+                lastStatus = e.getStatusCode().value();
+                lastErrorMsg = e.getResponseBodyAsString();
+                log.warn("Gemini API error (model: {}, status: {}): {}", activeModel, lastStatus, lastErrorMsg);
+
+                // If this is not the last model and the error is a temporary 503/429/404, try the next one
+                if (i < candidateModels.size() - 1 && (lastStatus == 503 || lastStatus == 404 || lastStatus == 429)) {
+                    log.info("Attempting fallback to next model in sequence: {}", candidateModels.get(i + 1));
+                    continue;
+                }
+
+                if (lastStatus == 429) {
+                    throw new AiServiceException("Gemini API rate limit exceeded. Please wait a moment and try again.", 429, e);
+                } else if (lastStatus == 400 || lastStatus == 403) {
+                    throw new AiServiceException("Gemini API authentication failed. Please verify your GEMINI_API_KEY.", 502, e);
+                } else {
+                    throw new AiServiceException("Gemini API returned HTTP " + lastStatus + ". Please try again later.", 502, e);
+                }
+            } catch (AiServiceException e) {
+                throw e;
+            } catch (Exception e) {
+                log.error("Unexpected failure communicating with Gemini API: {}", e.getMessage(), e);
+                throw new AiServiceException("Failed to generate AI summary: " + e.getMessage(), 502, e);
             }
-        } catch (AiServiceException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("Unexpected failure communicating with Gemini API: {}", e.getMessage(), e);
-            throw new AiServiceException("Failed to generate AI summary: " + e.getMessage(), 502, e);
         }
+
+        throw new AiServiceException("Failed to generate summary from Gemini AI: " + lastErrorMsg, lastStatus);
     }
 
     /**
@@ -149,7 +168,13 @@ public class GeminiService {
         try {
             JsonNode root = objectMapper.readTree(responseJson);
 
-            // Check for prompt feedback block / safety filter
+            // Check if error payload was returned in JSON
+            if (root.has("error")) {
+                String errMsg = root.path("error").path("message").asText("Gemini API error occurred.");
+                int code = root.path("error").path("code").asInt(502);
+                throw new AiServiceException("Gemini API error (" + code + "): " + errMsg, code);
+            }
+
             JsonNode promptFeedback = root.path("promptFeedback");
             if (promptFeedback.has("blockReason")) {
                 String blockReason = promptFeedback.path("blockReason").asText();
