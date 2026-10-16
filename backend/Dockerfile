@@ -23,7 +23,7 @@ COPY --from=build /app/target/*.jar app.jar
 
 # Environment variable defaults
 ENV SERVER_PORT=8080
-ENV GEMINI_MODEL=gemini-1.5-flash
+ENV GEMINI_MODEL=gemini-3.5-flash-lite
 
 EXPOSE 8080
 
