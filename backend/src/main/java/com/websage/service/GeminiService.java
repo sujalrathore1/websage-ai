@@ -97,13 +97,19 @@ public class GeminiService {
             log.info("Sending summarization request to Gemini model: {}", activeModel);
 
             try {
-                String rawResponse = restClient.post()
+                byte[] responseBytes = restClient.post()
                         .uri(endpointUri)
                         .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON, MediaType.ALL)
                         .body(requestPayload)
                         .retrieve()
-                        .body(String.class);
+                        .body(byte[].class);
 
+                if (responseBytes == null || responseBytes.length == 0) {
+                    throw new AiServiceException("Received empty response from Gemini API.", 502);
+                }
+
+                String rawResponse = new String(responseBytes, java.nio.charset.StandardCharsets.UTF_8);
                 return parseGeminiResponse(rawResponse);
 
             } catch (RestClientResponseException e) {
